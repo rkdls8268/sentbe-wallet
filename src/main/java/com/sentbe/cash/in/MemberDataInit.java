@@ -30,6 +30,8 @@ public class MemberDataInit {
 
   @Transactional
   public void makeBaseMembers() {
+    if (memberService.count() > 0) return;
+
     memberService.register("user1@test.com", "user1", "1234");
     memberService.register("user2@test.com", "user2", "1234");
     memberService.register("user3@test.com", "user3", "1234");

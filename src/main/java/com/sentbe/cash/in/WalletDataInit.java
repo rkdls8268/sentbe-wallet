@@ -1,6 +1,7 @@
 package com.sentbe.cash.in;
 
 import com.sentbe.cash.application.WalletService;
+import com.sentbe.cash.domain.Wallet;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -30,8 +31,18 @@ public class WalletDataInit {
 
   @Transactional
   public void makeBaseWallets() {
-    // TODO 초기화 코드
-    walletService.deposit();
+    Wallet wallet1 = walletService.getWalletByMember(1L);
+    if (wallet1.hasBalance()) return;
+    walletService.deposit(1L, 10_000L, "TXN_UUID_00001");
+
+    Wallet wallet2 = walletService.getWalletByMember(2L);
+    if (wallet2.hasBalance()) return;
+    walletService.deposit(2L, 20_000L, "TXN_UUID_00002");
+
+    Wallet wallet3 = walletService.getWalletByMember(3L);
+    if (wallet3.hasBalance()) return;
+    walletService.deposit(3L, 30_000L, "TXN_UUID_00003");
+
   }
 
 }

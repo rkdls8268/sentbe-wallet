@@ -2,11 +2,13 @@ package com.sentbe.cash.application;
 
 import com.sentbe.cash.domain.Member;
 import com.sentbe.cash.domain.Wallet;
+import com.sentbe.cash.in.dto.CashRequest;
 import com.sentbe.cash.in.dto.MemberDto;
 import com.sentbe.cash.out.MemberRepository;
 import com.sentbe.cash.out.WalletRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -21,13 +23,22 @@ public class WalletService {
     walletRepository.save(wallet);
   }
 
-  public void deposit() {
+  @Transactional
+  public void deposit(Long memberId, Long amount, String transactionId) {
     // 입금
-
+    Wallet wallet = walletRepository.findByMemberId(memberId).orElseThrow();
+    wallet.credit(amount, transactionId);
   }
 
-  public void withdraw() {
+  @Transactional
+  public void withdraw(CashRequest request) {
     // 출금
+    Wallet wallet = walletRepository.findByMemberId(request.memberId()).orElseThrow();
+    wallet.debit(request.amount(), request.transactionId());
+  }
+
+  public Wallet getWalletByMember(Long memberId) {
+    return walletRepository.findByMemberId(memberId).orElseThrow();
   }
 
 }

@@ -21,4 +21,8 @@ public class MemberService {
     eventPublisher.publish(new MemberCreatedEvent(member.toDto()));
   }
 
+  public long count() {
+    return memberRepository.count();
+  }
+
 }
