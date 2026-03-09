@@ -1,5 +1,6 @@
 package com.sentbe.cash.domain;
 
+import com.sentbe.cash.in.dto.WalletResponse;
 import com.sentbe.shared.jpa.entity.BaseEntity;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -38,5 +39,17 @@ public class CashLog extends BaseEntity {
     this.eventType = eventType;
     this.amount = amount;
     this.balance = balance;
+  }
+
+  public WalletResponse toWalletResponse() {
+    return new WalletResponse(
+      getTransactionId(),
+      getWallet().getId(),
+      getMember().getId(),
+      getEventType(),
+      getAmount(),
+      getBalance(),
+      getCreatedAt()
+    );
   }
 }
