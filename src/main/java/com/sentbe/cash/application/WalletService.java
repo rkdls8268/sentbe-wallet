@@ -5,7 +5,7 @@ import com.sentbe.cash.domain.Member;
 import com.sentbe.cash.domain.Wallet;
 import com.sentbe.cash.in.dto.CashRequest;
 import com.sentbe.cash.in.dto.MemberDto;
-import com.sentbe.cash.in.dto.WalletResponse;
+import com.sentbe.cash.in.dto.CashLogResponse;
 import com.sentbe.cash.out.CashLogRepository;
 import com.sentbe.cash.out.MemberRepository;
 import com.sentbe.cash.out.WalletRepository;
@@ -51,14 +51,14 @@ public class WalletService {
       .orElseThrow(() -> new GeneralException(ErrorStatus.WALLET_NOT_FOUND));
   }
 
-  public List<WalletResponse> getWallets(Long walletId) {
+  public List<CashLogResponse> getWallets(Long walletId) {
     boolean exists = walletRepository.existsById(walletId);
     if (!exists) {
       throw new GeneralException(ErrorStatus.WALLET_NOT_FOUND);
     }
 
     List<CashLog> cashLogs = cashLogRepository.findByWalletIdOrderByCreatedAtDesc(walletId);
-    return cashLogs.stream().map(CashLog::toWalletResponse).toList();
+    return cashLogs.stream().map(CashLog::toResponse).toList();
   }
 
 }

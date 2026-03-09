@@ -2,7 +2,7 @@ package com.sentbe.cash.in.api;
 
 import com.sentbe.cash.application.WalletService;
 import com.sentbe.cash.in.dto.CashRequest;
-import com.sentbe.cash.in.dto.WalletResponse;
+import com.sentbe.cash.in.dto.CashLogResponse;
 import com.sentbe.global.response.ApiResponse;
 import com.sentbe.global.status.SuccessStatus;
 import java.util.List;
@@ -39,7 +39,7 @@ public class WalletController {
    */
   @GetMapping("/{walletId}/transactions")
   public ResponseEntity<ApiResponse> getWallets(@PathVariable Long walletId) {
-    List<WalletResponse> transactions = walletService.getWallets(walletId);
+    List<CashLogResponse> transactions = walletService.getWallets(walletId);
     return ApiResponse.onSuccess(SuccessStatus.OK, transactions);
   }
 
