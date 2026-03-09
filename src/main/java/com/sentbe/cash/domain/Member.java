@@ -1,5 +1,6 @@
 package com.sentbe.cash.domain;
 
+import com.sentbe.cash.in.dto.MemberDto;
 import com.sentbe.shared.jpa.entity.BaseEntity;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
@@ -26,6 +27,16 @@ public class Member extends BaseEntity {
       .nickname(nickname)
       .password(password)
       .build();
+  }
+
+  public MemberDto toDto() {
+    return new MemberDto(
+      getId(),
+      getEmail(),
+      getNickname(),
+      getCreatedAt(),
+      getUpdatedAt()
+    );
   }
 
 }
