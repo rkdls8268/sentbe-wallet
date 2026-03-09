@@ -1,5 +1,7 @@
 package com.sentbe.cash.domain;
 
+import com.sentbe.global.exception.GeneralException;
+import com.sentbe.global.status.ErrorStatus;
 import com.sentbe.shared.jpa.entity.BaseEntity;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
@@ -49,8 +51,7 @@ public class Wallet extends BaseEntity {
 
   public void debit(Long amount, String transactionId) {
     if (balance < amount) {
-      // todo: 잔액 부족 시 출금 거부하고 예외 코드 반환
-      throw new RuntimeException("잔액 부족");
+      throw new GeneralException(ErrorStatus.BALANCE_NOT_ENOUGH);
     }
     this.balance -= amount;
     addCashLog(amount, EventType.출금, transactionId, member);

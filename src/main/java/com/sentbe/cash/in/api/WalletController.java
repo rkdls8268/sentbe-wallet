@@ -3,8 +3,11 @@ package com.sentbe.cash.in.api;
 import com.sentbe.cash.application.WalletService;
 import com.sentbe.cash.in.dto.CashRequest;
 import com.sentbe.cash.in.dto.WalletResponse;
+import com.sentbe.global.response.ApiResponse;
+import com.sentbe.global.status.SuccessStatus;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -22,17 +25,22 @@ public class WalletController {
   /**
    * 월렛 출금 API
    */
-  @PostMapping("/withdraw")
-  public void withdraw(@RequestBody CashRequest request) {
-    walletService.withdraw(request);
+  @PostMapping("/{walletId}/withdrawals")
+  public ResponseEntity<ApiResponse> withdraw(
+    @PathVariable Long walletId,
+    @RequestBody CashRequest request
+  ) {
+    walletService.withdraw(walletId, request);
+    return ApiResponse.onSuccess(SuccessStatus.NO_CONTENT);
   }
 
   /**
    * 월렛 거래내역 조회 API
    */
-  @GetMapping("/{id}")
-  public List<WalletResponse> getWallets(@PathVariable Long id) {
-    return walletService.getWallets(id);
+  @GetMapping("/{walletId}/transactions")
+  public ResponseEntity<ApiResponse> getWallets(@PathVariable Long walletId) {
+    List<WalletResponse> transactions = walletService.getWallets(walletId);
+    return ApiResponse.onSuccess(SuccessStatus.OK, transactions);
   }
 
 }
