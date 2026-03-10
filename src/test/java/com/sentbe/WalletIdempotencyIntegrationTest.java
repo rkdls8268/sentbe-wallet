@@ -9,6 +9,12 @@ import com.sentbe.cash.out.CashLogRepository;
 import com.sentbe.cash.out.MemberRepository;
 import com.sentbe.cash.out.WalletRepository;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -86,5 +92,65 @@ public class WalletIdempotencyIntegrationTest {
     assertThat(logs).hasSize(2);
     assertThat(logs).extracting(CashLog::getTransactionId)
       .containsExactlyInAnyOrder(transactionId, transactionId);
+  }
+
+  @Test
+  @DisplayName("멱등성 미보장 - 동일 transactionId 동시 요청 테스트")
+  void withdraw_sameTransactionId_concurrently_withoutIdempotency() throws Exception {
+    int threadCount = 20;
+    long withdrawAmount = 1000L;
+    String transactionId = "tx-same-concurrent";
+
+    ExecutorService executorService = Executors.newFixedThreadPool(20);
+
+    CountDownLatch startLatch = new CountDownLatch(1);
+    CountDownLatch doneLatch = new CountDownLatch(threadCount);
+
+    AtomicInteger successCount = new AtomicInteger();
+    List<Throwable> errors = new CopyOnWriteArrayList<>();
+
+    for (int i = 0; i < threadCount; i++) {
+      executorService.submit(() -> {
+        try {
+          startLatch.await();
+
+          CashRequest request = new CashRequest(memberId, withdrawAmount, transactionId);
+
+          try {
+            walletService.withdraw(walletId, request);
+            successCount.incrementAndGet();
+          } catch (Throwable t) {
+            errors.add(t);
+          }
+        } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
+          errors.add(e);
+        } finally {
+          doneLatch.countDown();
+        }
+      });
+    }
+
+    startLatch.countDown();
+    doneLatch.await();
+    executorService.shutdown();
+
+    // 최대 60초 동안 종료 대기. 안 끝나면 강제 종료
+    if (!executorService.awaitTermination(60, TimeUnit.SECONDS)) {
+      executorService.shutdownNow();
+    }
+
+    Wallet wallet = walletRepository.findById(walletId).orElseThrow();
+    List<CashLog> logs = cashLogRepository.findAll();
+
+    log.debug("Test Result - successCount = {}, finalBalance = {}, cashLogCount = {}",
+      successCount.get(), wallet.getBalance(), logs.size());
+
+    assertThat(errors).isEmpty();
+
+    // 멱등성이 있으면 원래 successCount == 1 이어야 함
+    // 지금은 비교용 테스트이므로 "1보다 클 수 있음"을 관찰
+    assertThat(successCount.get()).isGreaterThan(1);
+    assertThat(logs.size()).isGreaterThan(1);
   }
 }
