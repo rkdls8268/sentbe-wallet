@@ -14,7 +14,9 @@ public enum ErrorStatus {
   VALIDATION_ERROR(HttpStatus.BAD_REQUEST, "C002", "입력값이 올바르지 않습니다."),
 
   WALLET_NOT_FOUND(HttpStatus.NOT_FOUND, "W001", "존재하지 않는 wallet 입니다."),
-  BALANCE_NOT_ENOUGH(HttpStatus.BAD_REQUEST, "W002", "잔액이 부족합니다."),
+  INSUFFICIENT_BALANCE(HttpStatus.BAD_REQUEST, "W002", "잔액이 부족합니다."),
+  TRANSACTION_CONFLICT(HttpStatus.CONFLICT, "W003", "동일 transactionId로 다른 요청이 들어왔습니다."),
+  IDEMPOTENCY_RECORD_NOT_FOUND(HttpStatus.NOT_FOUND, "W004", "존재하지 않는 idempotency record 입니다."),
   ;
 
   private final HttpStatus httpStatus;

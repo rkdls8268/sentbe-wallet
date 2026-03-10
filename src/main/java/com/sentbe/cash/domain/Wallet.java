@@ -1,7 +1,6 @@
 package com.sentbe.cash.domain;
 
-import com.sentbe.global.exception.GeneralException;
-import com.sentbe.global.status.ErrorStatus;
+import com.sentbe.cash.domain.exception.InsufficientBalanceException;
 import com.sentbe.shared.jpa.entity.BaseEntity;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
@@ -44,24 +43,30 @@ public class Wallet extends BaseEntity {
   }
 
   public void credit(Long amount, String transactionId) {
+    if (amount == null || amount <= 0) {
+      throw new IllegalArgumentException("입금 금액은 0보다 커야 합니다.");
+    }
     this.balance += amount;
-    addCashLog(amount, EventType.입금, transactionId, member);
+    addCashLog(amount, EventType.입금, transactionId);
 
   }
 
   public void debit(Long amount, String transactionId) {
+    if (amount == null || amount <= 0) {
+      throw new IllegalArgumentException("출금 금액은 0보다 커야 합니다.");
+    }
     if (balance < amount) {
-      throw new GeneralException(ErrorStatus.BALANCE_NOT_ENOUGH);
+      throw new InsufficientBalanceException("잔액이 부족합니다.");
     }
     this.balance -= amount;
-    addCashLog(amount, EventType.출금, transactionId, member);
+    addCashLog(amount, EventType.출금, transactionId);
   }
 
   public boolean hasBalance() {
     return this.balance > 0;
   }
 
-  private CashLog addCashLog(long amount, EventType eventType, String transactionId, Member member) {
+  private CashLog addCashLog(long amount, EventType eventType, String transactionId) {
     CashLog cashLog = new CashLog(
       transactionId,
       member,

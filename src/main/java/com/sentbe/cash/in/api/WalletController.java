@@ -3,6 +3,7 @@ package com.sentbe.cash.in.api;
 import com.sentbe.cash.application.WalletService;
 import com.sentbe.cash.in.dto.CashRequest;
 import com.sentbe.cash.in.dto.CashLogResponse;
+import com.sentbe.cash.in.dto.WalletTransactionResponse;
 import com.sentbe.global.response.ApiResponse;
 import com.sentbe.global.status.SuccessStatus;
 import java.util.List;
@@ -30,8 +31,8 @@ public class WalletController {
     @PathVariable Long walletId,
     @RequestBody CashRequest request
   ) {
-    walletService.withdraw(walletId, request);
-    return ApiResponse.onSuccess(SuccessStatus.NO_CONTENT);
+    WalletTransactionResponse response = walletService.withdraw(walletId, request);
+    return ApiResponse.onSuccess(SuccessStatus.OK, response);
   }
 
   /**

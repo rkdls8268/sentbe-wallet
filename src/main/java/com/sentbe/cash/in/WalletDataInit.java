@@ -2,6 +2,7 @@ package com.sentbe.cash.in;
 
 import com.sentbe.cash.application.WalletService;
 import com.sentbe.cash.domain.Wallet;
+import com.sentbe.cash.in.dto.CashRequest;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -33,16 +34,18 @@ public class WalletDataInit {
   public void makeBaseWallets() {
     Wallet wallet1 = walletService.getWalletByMember(1L);
     if (wallet1.hasBalance()) return;
-    walletService.deposit(1L, 10_000L, "TXN_UUID_00001");
+    CashRequest request1 = new CashRequest(1L, 10_000L, "TXN_UUID_00001");
+    walletService.deposit(1L, request1);
 
     Wallet wallet2 = walletService.getWalletByMember(2L);
     if (wallet2.hasBalance()) return;
-    walletService.deposit(2L, 20_000L, "TXN_UUID_00002");
+    CashRequest request2 = new CashRequest(2L, 20_000L, "TXN_UUID_00002");
+    walletService.deposit(2L, request2);
 
     Wallet wallet3 = walletService.getWalletByMember(3L);
     if (wallet3.hasBalance()) return;
-    walletService.deposit(3L, 30_000L, "TXN_UUID_00003");
-
+    CashRequest request3 = new CashRequest(3L, 30_000L, "TXN_UUID_00003");
+    walletService.deposit(3L, request3);
   }
 
 }

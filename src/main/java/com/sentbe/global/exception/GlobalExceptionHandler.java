@@ -16,6 +16,13 @@ public class GlobalExceptionHandler {
 
   private static final String EXCEPTION_ATTRIBUTE = "handledException";
 
+  @ExceptionHandler(IllegalArgumentException.class)
+  public ResponseEntity<ApiResponse> handleIllegalArgumentException(IllegalArgumentException e) {
+    storeException(e);
+
+    return ApiResponse.onFailure(ErrorStatus.VALIDATION_ERROR, e.getMessage());
+  }
+
   @ExceptionHandler(Exception.class)
   public ResponseEntity<ApiResponse> handleException(Exception e) {
     storeException(e);
