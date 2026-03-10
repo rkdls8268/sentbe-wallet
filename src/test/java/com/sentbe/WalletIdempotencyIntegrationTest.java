@@ -8,6 +8,7 @@ import com.sentbe.cash.in.dto.CashRequest;
 import com.sentbe.cash.out.CashLogRepository;
 import com.sentbe.cash.out.MemberRepository;
 import com.sentbe.cash.out.WalletRepository;
+import com.sentbe.global.exception.GeneralException;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
@@ -101,12 +102,13 @@ public class WalletIdempotencyIntegrationTest {
     long withdrawAmount = 1000L;
     String transactionId = "tx-same-concurrent";
 
-    ExecutorService executorService = Executors.newFixedThreadPool(20);
+    ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
 
     CountDownLatch startLatch = new CountDownLatch(1);
     CountDownLatch doneLatch = new CountDownLatch(threadCount);
 
     AtomicInteger successCount = new AtomicInteger();
+    AtomicInteger failCount = new AtomicInteger();
     List<Throwable> errors = new CopyOnWriteArrayList<>();
 
     for (int i = 0; i < threadCount; i++) {
@@ -119,6 +121,8 @@ public class WalletIdempotencyIntegrationTest {
           try {
             walletService.withdraw(walletId, request);
             successCount.incrementAndGet();
+          } catch (GeneralException e) {
+            failCount.incrementAndGet();
           } catch (Throwable t) {
             errors.add(t);
           }
