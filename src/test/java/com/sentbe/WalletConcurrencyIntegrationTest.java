@@ -1,10 +1,9 @@
 package com.sentbe;
 
-import com.sentbe.cash.application.WalletTransactionService;
+import com.sentbe.cash.application.WalletTransactionFacade;
 import com.sentbe.cash.domain.Member;
 import com.sentbe.cash.domain.Wallet;
-import com.sentbe.cash.domain.WalletRequestType;
-import com.sentbe.cash.in.dto.WalletTransactionCommand;
+import com.sentbe.cash.in.dto.CashRequest;
 import com.sentbe.cash.out.MemberRepository;
 import com.sentbe.cash.out.WalletRepository;
 import com.sentbe.global.exception.GeneralException;
@@ -31,7 +30,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class WalletConcurrencyIntegrationTest {
 
   @Autowired
-  private WalletTransactionService walletTransactionService;
+  private WalletTransactionFacade walletTransactionFacade;
 
   @Autowired
   private WalletRepository walletRepository;
@@ -89,11 +88,11 @@ public class WalletConcurrencyIntegrationTest {
         try {
           startLatch.await();
 
-          WalletTransactionCommand command = new WalletTransactionCommand(memberId, walletId,
-            withdrawAmount, transactionId, WalletRequestType.WITHDRAW);
+          CashRequest request = new CashRequest(memberId, withdrawAmount, transactionId);
+
 
           try {
-            walletTransactionService.withdraw(command);
+            walletTransactionFacade.withdraw(walletId, request);
             successCount.incrementAndGet();
           } catch (GeneralException e) {
             failCount.incrementAndGet();

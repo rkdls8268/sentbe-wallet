@@ -1,11 +1,10 @@
 package com.sentbe;
 
-import com.sentbe.cash.application.WalletTransactionService;
+import com.sentbe.cash.application.WalletTransactionFacade;
 import com.sentbe.cash.domain.CashLog;
 import com.sentbe.cash.domain.Member;
 import com.sentbe.cash.domain.Wallet;
-import com.sentbe.cash.domain.WalletRequestType;
-import com.sentbe.cash.in.dto.WalletTransactionCommand;
+import com.sentbe.cash.in.dto.CashRequest;
 import com.sentbe.cash.out.CashLogRepository;
 import com.sentbe.cash.out.MemberRepository;
 import com.sentbe.cash.out.WalletRepository;
@@ -32,7 +31,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @ActiveProfiles("test")
 public class WalletIdempotencyIntegrationTest {
   @Autowired
-  private WalletTransactionService walletTransactionService;
+  private WalletTransactionFacade walletTransactionFacade;
 
   @Autowired
   private WalletRepository walletRepository;
@@ -76,12 +75,11 @@ public class WalletIdempotencyIntegrationTest {
     String transactionId = "TXN_UUID_00001";
     long withdrawAmount = 1000L;
 
-    WalletTransactionCommand command = new WalletTransactionCommand(memberId, walletId,
-      withdrawAmount, transactionId, WalletRequestType.WITHDRAW);
+    CashRequest request = new CashRequest(memberId, withdrawAmount, transactionId);
 
     // when
-    walletTransactionService.withdraw(command);
-    walletTransactionService.withdraw(command);
+    walletTransactionFacade.withdraw(walletId, request);
+    walletTransactionFacade.withdraw(walletId, request);
 
     // then
     Wallet wallet = walletRepository.findById(walletId).orElseThrow();
@@ -95,6 +93,32 @@ public class WalletIdempotencyIntegrationTest {
     assertThat(logs).hasSize(2);
     assertThat(logs).extracting(CashLog::getTransactionId)
       .containsExactlyInAnyOrder(transactionId, transactionId);
+  }
+
+  @Test
+  @DisplayName("멱등성 테스트 - 멱등성 보장 순차 재호출")
+  void withdraw_sameTransactionId_twice_withIdempotency() {
+    // given
+    String transactionId = "TXN_UUID_00001";
+    long withdrawAmount = 1000L;
+
+    CashRequest request = new CashRequest(memberId, withdrawAmount, transactionId);
+
+    // when
+    walletTransactionFacade.withdraw(walletId, request);
+    walletTransactionFacade.withdraw(walletId, request);
+
+    // then
+    Wallet wallet = walletRepository.findById(walletId).orElseThrow();
+    List<CashLog> logs = cashLogRepository.findAll();
+
+    log.debug("Test Result - finalBalance = {}, cashLogCount = {}",
+      wallet.getBalance(), logs.size());
+
+    assertThat(wallet.getBalance()).isEqualTo(9000L);
+    assertThat(logs).hasSize(1);
+    assertThat(logs).extracting(CashLog::getTransactionId)
+      .containsExactlyInAnyOrder(transactionId);
   }
 
   @Test
@@ -118,11 +142,10 @@ public class WalletIdempotencyIntegrationTest {
         try {
           startLatch.await();
 
-          WalletTransactionCommand command = new WalletTransactionCommand(memberId, walletId,
-            withdrawAmount, transactionId, WalletRequestType.WITHDRAW);
+          CashRequest request = new CashRequest(memberId, withdrawAmount, transactionId);
 
           try {
-            walletTransactionService.withdraw(command);
+            walletTransactionFacade.withdraw(walletId, request);
             successCount.incrementAndGet();
           } catch (GeneralException e) {
             failCount.incrementAndGet();

@@ -4,6 +4,7 @@ import com.sentbe.cash.domain.IdempotencyRecord;
 import com.sentbe.cash.domain.IdempotencyStatus;
 import com.sentbe.cash.domain.exception.IdempotencyConflictException;
 import com.sentbe.cash.domain.exception.InsufficientBalanceException;
+import com.sentbe.cash.domain.exception.InvalidAmountException;
 import com.sentbe.cash.in.dto.WalletTransactionCommand;
 import com.sentbe.cash.in.dto.WalletTransactionResponse;
 import com.sentbe.cash.out.IdempotencyRecordRepository;
@@ -27,8 +28,6 @@ public class IdempotencySupport {
     WalletTransactionCommand command,
     Function<WalletTransactionCommand, WalletTransactionResponse> action
   ) {
-    validateAmount(command.amount());
-
     // 동일 요청 존재 여부 확인
     Optional<IdempotencyRecord> existing =
       idempotencyRecordRepository.findByMemberIdAndTransactionId(
@@ -51,7 +50,9 @@ public class IdempotencySupport {
     } catch (InsufficientBalanceException e) {
       saveFailure(record.getId(), "INSUFFICIENT_BALANCE", e.getMessage());
       throw new GeneralException(ErrorStatus.INSUFFICIENT_BALANCE);
-
+    } catch (InvalidAmountException e) {
+      saveFailure(record.getId(), "INVALID_AMOUNT", e.getMessage());
+      throw new GeneralException(ErrorStatus.INVALID_AMOUNT);
     } catch (RuntimeException e) {
       saveFailure(record.getId(), "INTERNAL_SERVER_ERROR", "서버 오류가 발생했습니다.");
       throw new GeneralException(ErrorStatus.INTERNAL_SERVER_ERROR);
@@ -132,12 +133,6 @@ public class IdempotencySupport {
       case "INVALID_AMOUNT" -> new GeneralException(ErrorStatus.INVALID_AMOUNT);
       default -> new GeneralException(ErrorStatus.INTERNAL_SERVER_ERROR);
     };
-  }
-
-  private void validateAmount(Long amount) {
-    if (amount == null || amount <= 0) {
-      throw new GeneralException(ErrorStatus.INVALID_AMOUNT);
-    }
   }
 
 }
