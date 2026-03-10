@@ -1,6 +1,7 @@
 package com.sentbe.cash.in.api;
 
 import com.sentbe.cash.application.WalletService;
+import com.sentbe.cash.application.WalletTransactionFacade;
 import com.sentbe.cash.in.dto.CashRequest;
 import com.sentbe.cash.in.dto.CashLogResponse;
 import com.sentbe.cash.in.dto.WalletTransactionResponse;
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class WalletController {
 
   private final WalletService walletService;
+  private final WalletTransactionFacade walletTransactionFacade;
 
   /**
    * 월렛 출금 API
@@ -31,7 +33,7 @@ public class WalletController {
     @PathVariable Long walletId,
     @RequestBody CashRequest request
   ) {
-    WalletTransactionResponse response = walletService.withdraw(walletId, request);
+    WalletTransactionResponse response = walletTransactionFacade.withdraw(walletId, request);
     return ApiResponse.onSuccess(SuccessStatus.OK, response);
   }
 

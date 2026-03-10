@@ -17,6 +17,8 @@ public enum ErrorStatus {
   INSUFFICIENT_BALANCE(HttpStatus.BAD_REQUEST, "W002", "잔액이 부족합니다."),
   TRANSACTION_CONFLICT(HttpStatus.CONFLICT, "W003", "동일 transactionId로 다른 요청이 들어왔습니다."),
   IDEMPOTENCY_RECORD_NOT_FOUND(HttpStatus.NOT_FOUND, "W004", "존재하지 않는 idempotency record 입니다."),
+  DUPLICATE_REQUEST_IN_PROGRESS(HttpStatus.BAD_REQUEST, "W005", "동일한 요청이 처리중입니다."),
+  INVALID_AMOUNT(HttpStatus.BAD_REQUEST, "W006", "입출금액은 0보다 커야 합니다."),
   ;
 
   private final HttpStatus httpStatus;

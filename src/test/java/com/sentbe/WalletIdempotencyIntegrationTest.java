@@ -1,10 +1,11 @@
 package com.sentbe;
 
-import com.sentbe.cash.application.WalletService;
+import com.sentbe.cash.application.WalletTransactionService;
 import com.sentbe.cash.domain.CashLog;
 import com.sentbe.cash.domain.Member;
 import com.sentbe.cash.domain.Wallet;
-import com.sentbe.cash.in.dto.CashRequest;
+import com.sentbe.cash.domain.WalletRequestType;
+import com.sentbe.cash.in.dto.WalletTransactionCommand;
 import com.sentbe.cash.out.CashLogRepository;
 import com.sentbe.cash.out.MemberRepository;
 import com.sentbe.cash.out.WalletRepository;
@@ -31,7 +32,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @ActiveProfiles("test")
 public class WalletIdempotencyIntegrationTest {
   @Autowired
-  private WalletService walletService;
+  private WalletTransactionService walletTransactionService;
 
   @Autowired
   private WalletRepository walletRepository;
@@ -75,11 +76,12 @@ public class WalletIdempotencyIntegrationTest {
     String transactionId = "TXN_UUID_00001";
     long withdrawAmount = 1000L;
 
-    CashRequest request = new CashRequest(memberId, withdrawAmount, transactionId);
+    WalletTransactionCommand command = new WalletTransactionCommand(memberId, walletId,
+      withdrawAmount, transactionId, WalletRequestType.WITHDRAW);
 
     // when
-    walletService.withdraw(walletId, request);
-    walletService.withdraw(walletId, request);
+    walletTransactionService.withdraw(command);
+    walletTransactionService.withdraw(command);
 
     // then
     Wallet wallet = walletRepository.findById(walletId).orElseThrow();
@@ -116,10 +118,11 @@ public class WalletIdempotencyIntegrationTest {
         try {
           startLatch.await();
 
-          CashRequest request = new CashRequest(memberId, withdrawAmount, transactionId);
+          WalletTransactionCommand command = new WalletTransactionCommand(memberId, walletId,
+            withdrawAmount, transactionId, WalletRequestType.WITHDRAW);
 
           try {
-            walletService.withdraw(walletId, request);
+            walletTransactionService.withdraw(command);
             successCount.incrementAndGet();
           } catch (GeneralException e) {
             failCount.incrementAndGet();

@@ -44,14 +44,13 @@ public class IdempotencyRecord extends BaseEntity {
   @Column(nullable = false)
   private IdempotencyStatus status;
 
-  @Column(name = "response_code", length = 100)
+  @Column(length = 100)
   private String responseCode;
 
-  @Column(name = "response_message", length = 255)
+  @Column(length = 256)
   private String responseMessage;
 
   @Lob
-  @Column(name = "response_body")
   private String responseBody;
 
   private IdempotencyRecord(
