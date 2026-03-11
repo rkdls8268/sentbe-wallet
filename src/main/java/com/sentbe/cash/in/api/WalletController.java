@@ -29,6 +29,18 @@ public class WalletController {
   private final WalletTransactionFacade walletTransactionFacade;
 
   /**
+   * 월렛 입금 API
+   */
+  @PostMapping("/{walletId}/deposits")
+  public ResponseEntity<ApiResponse> deposit(
+    @PathVariable Long walletId,
+    @RequestBody @Valid CashRequest request
+  ) {
+    WalletTransactionResponse response = walletTransactionFacade.deposit(walletId, request);
+    return ApiResponse.onSuccess(SuccessStatus.OK, response);
+  }
+
+  /**
    * 월렛 출금 API
    */
   @PostMapping("/{walletId}/withdrawals")
