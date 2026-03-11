@@ -1,9 +1,11 @@
 package com.sentbe;
 
 import com.sentbe.cash.application.WalletTransactionFacade;
+import com.sentbe.cash.domain.CashLog;
 import com.sentbe.cash.domain.Member;
 import com.sentbe.cash.domain.Wallet;
 import com.sentbe.cash.in.dto.CashRequest;
+import com.sentbe.cash.out.CashLogRepository;
 import com.sentbe.cash.out.MemberRepository;
 import com.sentbe.cash.out.WalletRepository;
 import com.sentbe.global.exception.GeneralException;
@@ -38,8 +40,12 @@ public class WalletConcurrencyIntegrationTest {
   @Autowired
   private MemberRepository memberRepository;
 
+  @Autowired
+  private CashLogRepository cashLogRepository;
+
   private Long memberId;
   private Long walletId;
+  private final Long initialBalance = 100_000L;
 
   @BeforeEach
   void setUp() {
@@ -55,7 +61,7 @@ public class WalletConcurrencyIntegrationTest {
 
     Wallet wallet = Wallet.builder()
       .member(member)
-      .balance(10_000L) // 1000원씩 10번까지만 성공 가능
+      .balance(initialBalance) // 1000원씩 10번까지만 성공 가능
       .build();
     walletRepository.save(wallet);
 
@@ -69,7 +75,7 @@ public class WalletConcurrencyIntegrationTest {
   void concurrentWithdraw_withoutConcurrencyControl() throws Exception {
     int threadCount = 100;
     long withdrawAmount = 1000L;
-    long initialBalance = 10_000L;
+    long expectedSuccessCount = initialBalance / withdrawAmount;
 
     // 작업 병렬 처리를 위한 스레드 풀 생성
     ExecutorService executorService = Executors.newFixedThreadPool(30);
@@ -87,11 +93,8 @@ public class WalletConcurrencyIntegrationTest {
       executorService.submit(() -> {
         try {
           startLatch.await();
-
-          CashRequest request = new CashRequest(memberId, withdrawAmount, transactionId);
-
-
           try {
+            CashRequest request = new CashRequest(memberId, withdrawAmount, transactionId);
             walletTransactionFacade.withdraw(walletId, request);
             successCount.incrementAndGet();
           } catch (GeneralException e) {
@@ -120,7 +123,6 @@ public class WalletConcurrencyIntegrationTest {
 
     Wallet wallet = walletRepository.findById(walletId).orElseThrow();
     long finalBalance = wallet.getBalance();
-    long expectedSuccessCount = initialBalance / withdrawAmount;
 
     log.debug(
       "Test Result - successCount = {}, failCount = {}, finalBalance = {}, expectedSuccessCount = {}",
@@ -129,5 +131,70 @@ public class WalletConcurrencyIntegrationTest {
     assertThat(unexpectedErrors).isEmpty();
     assertThat(successCount.get() + failCount.get()).isEqualTo(threadCount);
     assertThat(successCount.get()).isGreaterThanOrEqualTo((int) expectedSuccessCount);
+  }
+
+  @Test
+  @DisplayName("동시 출금 테스트 - 동시성 제어를 통한 잔액 무결성 보장")
+  void concurrentWithdraw_withConcurrencyControl() throws Exception {
+    int threadCount = 500;
+    long withdrawAmount = 1000L;
+    long expectedSuccessCount = initialBalance / withdrawAmount;
+
+    ExecutorService executorService = Executors.newFixedThreadPool(30);
+
+    CountDownLatch startLatch = new CountDownLatch(1);
+    CountDownLatch doneLatch = new CountDownLatch(threadCount);
+
+    AtomicInteger successCount = new AtomicInteger();
+    AtomicInteger failCount = new AtomicInteger();
+    List<Throwable> unexpectedErrors = new CopyOnWriteArrayList<>();
+
+    for (int i = 0; i < threadCount; i++) {
+      final String transactionId = "TXN-" + i;
+
+      executorService.submit(() -> {
+        try {
+          startLatch.await();
+          try {
+            CashRequest request = new CashRequest(memberId, withdrawAmount, transactionId);
+            walletTransactionFacade.withdraw(walletId, request);
+            successCount.incrementAndGet();
+          } catch (GeneralException e) {
+            failCount.incrementAndGet();
+          } catch (Throwable t) {
+            unexpectedErrors.add(t);
+          }
+        } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
+          unexpectedErrors.add(e);
+        } finally {
+          doneLatch.countDown();
+        }
+      });
+    }
+
+    startLatch.countDown();
+    doneLatch.await();
+
+    executorService.shutdown();
+
+    // 최대 60초 동안 종료 대기. 안 끝나면 강제 종료
+    if (!executorService.awaitTermination(60, TimeUnit.SECONDS)) {
+      executorService.shutdownNow();
+    }
+
+    Wallet wallet = walletRepository.findById(walletId).orElseThrow();
+    List<CashLog> cashLogs = cashLogRepository.findAll();
+    long finalBalance = wallet.getBalance();
+
+    log.debug(
+      "Test Result - successCount = {}, failCount = {}, finalBalance = {}, expectedSuccessCount = {}, cashLogCount = {}",
+      successCount.get(), failCount.get(), finalBalance, expectedSuccessCount, cashLogs.size());
+
+    assertThat(unexpectedErrors).isEmpty();
+    assertThat(successCount.get()).isEqualTo(expectedSuccessCount);
+    assertThat(failCount.get()).isEqualTo(threadCount - expectedSuccessCount);
+    assertThat(finalBalance).isEqualTo(0L);
+    assertThat(cashLogs).extracting(CashLog::getTransactionId).size().isEqualTo(expectedSuccessCount);
   }
 }
