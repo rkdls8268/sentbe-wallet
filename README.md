@@ -107,6 +107,7 @@ docker compose up -d
     ```
 
 ### 주요 요구사항
+* [멱등성 보장](./docs/idempotency.md)
 * [동시성 제어](./docs/concurrency.md)
 
 ### 추가 기능
