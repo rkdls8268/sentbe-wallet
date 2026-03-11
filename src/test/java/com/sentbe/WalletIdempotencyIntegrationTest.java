@@ -69,33 +69,6 @@ public class WalletIdempotencyIntegrationTest {
   }
 
   @Test
-  @DisplayName("멱등성 테스트 - 멱등성 미보장 순차 재호출")
-  void withdraw_sameTransactionId_twice_withoutIdempotency() {
-    // given
-    String transactionId = "TXN_UUID_00001";
-    long withdrawAmount = 1000L;
-
-    CashRequest request = new CashRequest(memberId, withdrawAmount, transactionId);
-
-    // when
-    walletTransactionFacade.withdraw(walletId, request);
-    walletTransactionFacade.withdraw(walletId, request);
-
-    // then
-    Wallet wallet = walletRepository.findById(walletId).orElseThrow();
-    List<CashLog> logs = cashLogRepository.findAll();
-
-    log.debug("Test Result - finalBalance = {}, cashLogCount = {}",
-      wallet.getBalance(), logs.size());
-
-    // 멱등성이 없으므로 두 번 차감
-    assertThat(wallet.getBalance()).isEqualTo(8000L);
-    assertThat(logs).hasSize(2);
-    assertThat(logs).extracting(CashLog::getTransactionId)
-      .containsExactlyInAnyOrder(transactionId, transactionId);
-  }
-
-  @Test
   @DisplayName("멱등성 테스트 - 멱등성 보장 순차 재호출")
   void withdraw_sameTransactionId_twice_withIdempotency() {
     // given
@@ -122,10 +95,11 @@ public class WalletIdempotencyIntegrationTest {
   }
 
   @Test
-  @DisplayName("멱등성 미보장 - 동일 transactionId 동시 요청 테스트")
-  void withdraw_sameTransactionId_concurrently_withoutIdempotency() throws Exception {
+  @DisplayName("멱등성 테스트 - 동일 transactionId 동시 요청 시 1건만 반영된다")
+  void withdraw_sameTransactionId_concurrently_withIdempotency() throws Exception {
     int threadCount = 20;
     long withdrawAmount = 1000L;
+    long initialBalance = 10_000L;
     String transactionId = "tx-same-concurrent";
 
     ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
@@ -179,8 +153,8 @@ public class WalletIdempotencyIntegrationTest {
     assertThat(errors).isEmpty();
 
     // 멱등성이 있으면 원래 successCount == 1 이어야 함
-    // 지금은 비교용 테스트이므로 "1보다 클 수 있음"을 관찰
-    assertThat(successCount.get()).isGreaterThan(1);
-    assertThat(logs.size()).isGreaterThan(1);
+    assertThat(successCount.get()).isEqualTo(1);
+    assertThat(logs.size()).isEqualTo(1);
+    assertThat(wallet.getBalance()).isEqualTo(initialBalance - withdrawAmount);
   }
 }

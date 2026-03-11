@@ -19,6 +19,7 @@ public enum ErrorStatus {
   IDEMPOTENCY_RECORD_NOT_FOUND(HttpStatus.NOT_FOUND, "W004", "존재하지 않는 idempotency record 입니다."),
   DUPLICATE_REQUEST_IN_PROGRESS(HttpStatus.BAD_REQUEST, "W005", "동일한 요청이 처리중입니다."),
   INVALID_AMOUNT(HttpStatus.BAD_REQUEST, "W006", "입출금액은 0보다 커야 합니다."),
+  IDEMPOTENCY_SAVE_FAILED(HttpStatus.BAD_REQUEST, "W007", "요청 처리 결과를 최종 확인하지 못했습니다. 동일 transactionId로 다시 조회하거나 재시도해주세요.")
   ;
 
   private final HttpStatus httpStatus;
