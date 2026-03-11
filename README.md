@@ -1,11 +1,11 @@
 # wallet 동시 출금 및 잔액 무결성 보장 시스템
 
-### 기술 스택 및 환경
+## 기술 스택 및 환경
 * 언어: Java 21
 * framework: Spring Boot 4+
 * db: RDB (PostgreSQL)
 
-### 실행 방법
+## 실행 방법
 1. postgresql 실행
 ```shell
 docker compose up -d
@@ -18,7 +18,7 @@ docker compose up -d
 3. 초기 데이터 setup
 * ApplicationRunner를 활용한 DataInit 으로 Application 실행과 동시에 Member, Wallet 초기 데이터 세팅 완료
 
-### API
+## API
 * 월렛 입금 API
   * `POST /api/v1/wallets/{walletId}/deposits`
     * request
@@ -106,6 +106,10 @@ docker compose up -d
       }
     ```
 
-### 주요 요구사항
+## 주요 요구사항
 * [멱등성 보장](./docs/idempotency.md)
 * [동시성 제어](./docs/concurrency.md)
+
+## 현재 설계의 우려사항
+1. Lock Contention 가능성
+   * 특정 

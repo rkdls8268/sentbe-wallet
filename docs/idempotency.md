@@ -174,9 +174,31 @@ return jsonConverter.fromJson(
 | 동일 요청 중복 출금 | transactionId 기반 차단 |
 
 ## 정리
-
 - 동일 요청은 한 번만 처리
 - 중복 요청은 기존 결과 반환
+
+## 우려사항
+### 1. Idempotency Record 테이블 증가
+모든 요청에 대해 idempotency record가 생성되기 때문에
+* 데이터 증가
+* 저장 공간 증가
+* 조회 성능 저하 가능성
+
+### 2. PROCESSING 상태 잔존 가능성
+시스템 장애가 발생할 경우 PROCESSING 상태가 남을 수 있습니다.
+이 경우 동일 요청이 계속 실패할 수 있습니다.
+
+## 향후 대책
+### 1. Idempotency Record TTL 정책
+일정 기간 이후 오래된 idempotency 데이터를 삭제
+* batch를 활용한 scheduled job
+
+### 2. 잔존 PROCESSING 상태 처리
+* `PROCESSING` 상태가 일정 시간 이상 유지되면 비정상 상태로 판단하여 `FAILED` 처리
+* 주기적으로 `PROCESSING` 상태 검사하는 배치 작업 실행
+* 요청 재시도 허용 방식
+  * 일정 시간이 지나면 `FAILED` 처리가 아닌 새 요청 retry
+
 
 ## 참고 코드
 * [IdempotencySupport.java](../src/main/java/com/sentbe/cash/application/IdempotencySupport.java)
