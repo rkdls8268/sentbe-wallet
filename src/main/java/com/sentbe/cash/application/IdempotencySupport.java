@@ -28,13 +28,14 @@ public class IdempotencySupport {
     WalletTransactionCommand command,
     Function<WalletTransactionCommand, WalletTransactionResponse> action
   ) {
-    // 동일 요청 존재 여부 확인
+    // 1. idempotency key 선점
     Optional<IdempotencyRecord> existing =
       idempotencyRecordRepository.findByMemberIdAndTransactionId(
         command.memberId(),
         command.transactionId()
       );
 
+    // 2. 이미 있으면 기존 결과 반환
     if (existing.isPresent()) {
       return restoreOrThrow(existing.get(), command);
     }
@@ -42,11 +43,17 @@ public class IdempotencySupport {
     IdempotencyRecord record = createProcessingOrRestore(command);
 
     try {
+      // 3. wallet row를 비관적 락으로 조회
+      // 4. 잔액 확인
+      // 5. balance 차감
+      // 6. cash_log insert
       WalletTransactionResponse response = action.apply(command);
 
+      // 7-1. idempotency SUCCESS 저장
       saveSuccess(record.getId(), response);
       return response;
 
+      // 7-2. idempotency FAILED 저장
     } catch (InsufficientBalanceException e) {
       saveFailure(record.getId(), "INSUFFICIENT_BALANCE", e.getMessage());
       throw new GeneralException(ErrorStatus.INSUFFICIENT_BALANCE);
@@ -54,7 +61,7 @@ public class IdempotencySupport {
       saveFailure(record.getId(), "INVALID_AMOUNT", e.getMessage());
       throw new GeneralException(ErrorStatus.INVALID_AMOUNT);
     } catch (RuntimeException e) {
-      saveFailure(record.getId(), "INTERNAL_SERVER_ERROR", "서버 오류가 발생했습니다.");
+      saveFailure(record.getId(), "INTERNAL_SERVER_ERROR", e.getMessage());
       throw new GeneralException(ErrorStatus.INTERNAL_SERVER_ERROR);
     }
   }

@@ -15,7 +15,7 @@ public class WalletTransactionService {
   private final WalletRepository walletRepository;
 
   public WalletTransactionResponse withdraw(WalletTransactionCommand command) {
-    Wallet wallet = walletRepository.findById(command.walletId())
+    Wallet wallet = walletRepository.findByIdForUpdate(command.walletId())
       .orElseThrow(() -> new GeneralException(ErrorStatus.WALLET_NOT_FOUND));
 
     wallet.debit(command.amount(), command.transactionId());
@@ -28,7 +28,7 @@ public class WalletTransactionService {
   }
 
   public WalletTransactionResponse deposit(WalletTransactionCommand command) {
-    Wallet wallet = walletRepository.findById(command.walletId())
+    Wallet wallet = walletRepository.findByIdForUpdate(command.walletId())
       .orElseThrow(() -> new GeneralException(ErrorStatus.WALLET_NOT_FOUND));
 
     wallet.credit(command.amount(), command.transactionId());
