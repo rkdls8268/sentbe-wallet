@@ -109,7 +109,3 @@ docker compose up -d
 ## 주요 요구사항
 * [멱등성 보장](./docs/idempotency.md)
 * [동시성 제어](./docs/concurrency.md)
-
-## 현재 설계의 우려사항
-1. Lock Contention 가능성
-   * 특정 
