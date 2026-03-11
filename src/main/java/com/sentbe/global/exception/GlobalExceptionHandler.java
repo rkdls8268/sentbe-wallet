@@ -5,6 +5,7 @@ import com.sentbe.global.status.ErrorStatus;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -21,6 +22,15 @@ public class GlobalExceptionHandler {
     storeException(e);
 
     return ApiResponse.onFailure(ErrorStatus.VALIDATION_ERROR, e.getMessage());
+  }
+
+  @ExceptionHandler(MethodArgumentNotValidException.class)
+  public ResponseEntity<ApiResponse> handleMethodArgumentNotValidException(
+    MethodArgumentNotValidException e) {
+    storeException(e);
+
+    String errorMessage = e.getBindingResult().getFieldError().getDefaultMessage();
+    return ApiResponse.onFailure(ErrorStatus.VALIDATION_ERROR, errorMessage);
   }
 
   @ExceptionHandler(Exception.class)
@@ -40,6 +50,7 @@ public class GlobalExceptionHandler {
 
     return ApiResponse.onFailure(e.getErrorStatus(), e.getMessage());
   }
+
 
 
   private void storeException(Exception e) {
