@@ -72,7 +72,7 @@ void concurrentWithdraw_withoutConcurrencyControl() throws Exception {
 ```
 
 * 테스트 결과
-![동시 출금 테스트 - 동시성 제어 X](./src/main/resources/static/concurrency_test_without_lock.png)
+![동시 출금 테스트 - 동시성 제어 X](./image/concurrency_test_without_lock.png)
 
 
 ### 비관적 락 적용 후 잔액 무결성 보장 검증 테스트
@@ -93,11 +93,11 @@ void concurrentWithdraw_withConcurrencyControl() throws Exception {
 ```
 
 * 테스트 결과
-  ![동시 출금 테스트 - 동시성 제어](./src/main/resources/static/concurrency_test_with_lock.png)
+  ![동시 출금 테스트 - 동시성 제어](./image/concurrency_test_with_lock.png)
   * 정확히 10건의 데이터만 `insert`
-    ![동시 출금 테스트 - 동시성 제어 Cash Log](./src/main/resources/static/concurrency_test_cash_log.png)
+    ![동시 출금 테스트 - 동시성 제어 Cash Log](./image/concurrency_test_cash_log.png)
   * 10건 데이터 `SUCCESS` 처리 이후 나머지 90건 데이터는 `FAILED` 처리
-    ![동시 출금 테스트 - 동시성 제어 Idempotency Record](./src/main/resources/static/concurrency_test_idempotency_record.png)
+    ![동시 출금 테스트 - 동시성 제어 Idempotency Record](./image/concurrency_test_idempotency_record.png)
 
 ## 참고 파일
 * [WalletConcurrencyIntegrationTest.java](../src/test/java/com/sentbe/WalletConcurrencyIntegrationTest.java)
