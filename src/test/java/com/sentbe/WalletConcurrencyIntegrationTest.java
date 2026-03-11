@@ -73,7 +73,7 @@ public class WalletConcurrencyIntegrationTest {
 
   @Test
   @Disabled
-  @DisplayName("동시 출금 테스트 - 동시성 문제로 인한 잔액 무결성이 보장되지 않는 경우")
+  @DisplayName("동시 출금 테스트 - 동시성 문제로 인한 데이터 무결성이 보장되지 않는 경우")
   void concurrentWithdraw_withoutConcurrencyControl() throws Exception {
     int threadCount = 100;
     long withdrawAmount = 1000L;
@@ -136,7 +136,7 @@ public class WalletConcurrencyIntegrationTest {
   }
 
   @Test
-  @DisplayName("동시 출금 테스트 - 동시성 제어를 통한 잔액 무결성 보장")
+  @DisplayName("동시 출금 테스트 - 동시성 제어를 통한 데이터 무결성 보장")
   void concurrentWithdraw_withConcurrencyControl() throws Exception {
     int threadCount = 100;
     long withdrawAmount = 1000L;
