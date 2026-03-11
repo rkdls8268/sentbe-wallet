@@ -4,8 +4,6 @@ server:
 spring:
   application:
     name: sentbe
-  profiles:
-    active: local
 
   datasource:
     url: jdbc:postgresql://localhost:5432/sentbe
