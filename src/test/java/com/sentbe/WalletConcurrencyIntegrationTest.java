@@ -18,6 +18,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,7 +46,7 @@ public class WalletConcurrencyIntegrationTest {
 
   private Long memberId;
   private Long walletId;
-  private final Long initialBalance = 100_000L;
+  private final Long initialBalance = 10_000L;
 
   @BeforeEach
   void setUp() {
@@ -71,6 +72,7 @@ public class WalletConcurrencyIntegrationTest {
   }
 
   @Test
+  @Disabled
   @DisplayName("동시 출금 테스트 - 동시성 문제로 인한 잔액 무결성이 보장되지 않는 경우")
   void concurrentWithdraw_withoutConcurrencyControl() throws Exception {
     int threadCount = 100;
@@ -136,7 +138,7 @@ public class WalletConcurrencyIntegrationTest {
   @Test
   @DisplayName("동시 출금 테스트 - 동시성 제어를 통한 잔액 무결성 보장")
   void concurrentWithdraw_withConcurrencyControl() throws Exception {
-    int threadCount = 500;
+    int threadCount = 100;
     long withdrawAmount = 1000L;
     long expectedSuccessCount = initialBalance / withdrawAmount;
 

@@ -12,7 +12,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.core.annotation.Order;
 import org.springframework.transaction.annotation.Transactional;
 
-@Profile({"!prod", "!test"})
+@Profile("!prod & !test")
 @Configuration
 public class WalletDataInit {
   private final WalletDataInit self;
